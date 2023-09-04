@@ -12,10 +12,11 @@ import lombok.Getter;
 public class Block implements Serializable {
   @Serial private static final long serialVersionUID = 1L;
 
+  private static final int TRANSACTION_UPPER_LIMIT = 2;
   private int difficultyLevel = 20;
 
   @Getter(AccessLevel.NONE)
-  private List<String> transactions = new ArrayList<>();
+  private List<Transaction> transactions = new ArrayList<>();
 
   private long timestamp;
   private String previousBlockHashID;
@@ -31,8 +32,8 @@ public class Block implements Serializable {
   protected String computeHashID() {
     StringBuilder sb = new StringBuilder();
     sb.append(this.previousBlockHashID + Long.toHexString(this.timestamp));
-    for (String t : transactions) {
-      sb.append(t);
+    for (Transaction t : transactions) {
+      sb.append(t.getHashID());
     }
     sb.append(Integer.toHexString(this.difficultyLevel) + nonce);
     byte[] b = UtilityMethods.messageDigestSHA256_toBytes(sb.toString());
@@ -49,7 +50,19 @@ public class Block implements Serializable {
     return true;
   }
 
-  public void addTransaction(String t) {
+  public boolean addTransaction(Transaction t) {
+    if (this.getNumberOfTransactions() >= TRANSACTION_UPPER_LIMIT) {
+      return false;
+    }
     this.transactions.add(t);
+    return true;
+  }
+
+  public int getNumberOfTransactions() {
+    return transactions.size();
+  }
+
+  public Transaction getTransaction(int i) {
+    return transactions.get(i);
   }
 }

@@ -1,8 +1,8 @@
+/* Copyright © 2023 Andreas Börjesson AB */
 package org.andruch.mains;
 
-import org.andruch.Wallet;
-
 import java.util.Scanner;
+import org.andruch.Wallet;
 
 public class TestWallet_1 {
   public static void main(String[] args) {

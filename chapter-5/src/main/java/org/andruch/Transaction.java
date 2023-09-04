@@ -39,12 +39,12 @@ public class Transaction implements Serializable {
       PublicKey sender, PublicKey[] receivers, double[] fundsToTransfer, ArrayList<UTXO> inputs) {
     this.mySeqNumber = UtilityMethods.getUniqueNumber();
     this.sender = sender;
-    this.receivers = new PublicKey[1];
+    // this.receivers = new PublicKey[1];
     this.receivers = receivers;
     this.fundsToTransfer = fundsToTransfer;
     this.inputs = inputs;
     this.timestamp = UtilityMethods.getTimeStamp();
-    computeHashID();
+    this.hashID = computeHashID();
   }
 
   public void signTheTransaction(PrivateKey privateKey) {
@@ -59,9 +59,9 @@ public class Transaction implements Serializable {
     return UtilityMethods.verifySignature(this.sender, this.signature, message);
   }
 
-  private void computeHashID() {
+  private String computeHashID() {
     String message = getMessageData();
-    this.hashID = UtilityMethods.messageDigestSHA256_toString(message);
+    return UtilityMethods.messageDigestSHA256_toString(message);
   }
 
   private String getMessageData() {
@@ -121,8 +121,17 @@ public class Transaction implements Serializable {
     return true;
   }
 
-  public boolean equals(Transaction other) {
-    return this.getHashID().equals(other.getHashID());
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof Transaction other) {
+      return this.getHashID().equals(other.getHashID());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return getHashID().hashCode();
   }
 
   public int getNumberOfOutputUTXOs() {

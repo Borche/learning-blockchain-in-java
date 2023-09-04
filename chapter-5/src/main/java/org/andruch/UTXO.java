@@ -38,10 +38,17 @@ public class UTXO implements Serializable {
     return UtilityMethods.messageDigestSHA256_toString(message);
   }
 
-  public boolean equals(UTXO other) {
-    // if (obj instanceof UTXO other) {
-    return getHashID().equals(other.getHashID());
-    // }
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof UTXO other) {
+      return getHashID().equals(other.getHashID());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return getHashID().hashCode();
   }
 
   public boolean isMiningReward() {

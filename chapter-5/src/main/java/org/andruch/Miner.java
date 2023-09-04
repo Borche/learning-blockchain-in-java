@@ -1,3 +1,4 @@
+/* Copyright © 2023 Andreas Börjesson AB */
 package org.andruch;
 
 public class Miner extends Wallet {
