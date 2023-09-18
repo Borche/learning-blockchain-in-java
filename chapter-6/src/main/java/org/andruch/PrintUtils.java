@@ -27,7 +27,7 @@ public class PrintUtils {
     printWithTab(out, level, "}");
   }
 
-  private static void printUTXO(UTXO utxo, PrintStream out, int level) {
+  public static void printUTXO(UTXO utxo, PrintStream out, int level) {
     printWithTab(
         out,
         level,
@@ -37,10 +37,33 @@ public class PrintUtils {
             + UtilityMethods.getKeyString(utxo.getReceiver()));
   }
 
-  private static void printWithTab(PrintStream out, int level, String s) {
+  public static void printWithTab(PrintStream out, int level, String s) {
     for (int i = 0; i < level; i++) {
       out.print("\t");
     }
     out.println(s);
+  }
+
+  public static void displayBlockchain(Blockchain ledger, PrintStream out, int level) {
+    printWithTab(out, level, "Blockchain{ number of blocks: " + ledger.size());
+    for (int i = 0; i < ledger.size(); i++) {
+      Block block = ledger.getBlock(i);
+      displayBlock(block, out, level + 1);
+    }
+    printWithTab(out, level, "}");
+  }
+
+  public static void displayBlock(Block block, PrintStream out, int level) {
+    printWithTab(out, level, "Block{");
+    printWithTab(out, level, "\tID: " + block.getHashID());
+    for (int i = 0; i < block.getNumberOfTransactions(); i++) {
+      printTransaction(block.getTransaction(i), out, level + 1);
+    }
+    // display the reward transaction
+    if (block.getRewardTransaction() != null) {
+      printWithTab(out, level, "\tReward Transaction:");
+      printTransaction(block.getRewardTransaction(), out, level + 1);
+    }
+    printWithTab(out, level, "}");
   }
 }

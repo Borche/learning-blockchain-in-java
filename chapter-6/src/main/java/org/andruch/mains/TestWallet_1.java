@@ -13,10 +13,10 @@ public class TestWallet_1 {
     String password = in.nextLine();
     in.close();
     Wallet w = new Wallet(name, password);
-    System.out.println("Wallet created: " + w.getWalletName());
+    System.out.println("Wallet created: " + w.getName());
 
     // Load the wallet
     Wallet w2 = new Wallet(name, password);
-    System.out.println("Wallet loaded: " + w2.getWalletName());
+    System.out.println("Wallet loaded: " + w2.getName());
   }
 }

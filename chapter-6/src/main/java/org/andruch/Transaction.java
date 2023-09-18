@@ -1,6 +1,7 @@
 /* Copyright © 2023 Andreas Börjesson AB */
 package org.andruch;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 import lombok.Getter;
 
 public class Transaction implements Serializable {
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
   public static final double TRANSACTION_FEE = 1.0;
   @Getter private String hashID;
   @Getter private PublicKey sender;

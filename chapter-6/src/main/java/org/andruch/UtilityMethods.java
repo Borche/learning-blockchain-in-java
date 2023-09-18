@@ -22,6 +22,42 @@ public class UtilityMethods {
     return uniqueNumber++;
   }
 
+  /**
+   * The merkle tree could be a binary tree, or triple tree, or ... Here it is a binary tree model.
+   *
+   * <p>The input size could be of an even or odd number. So, I use a recursive algorithm to compute
+   * the merkle tree root hash
+   *
+   * @param hashes
+   * @return
+   */
+  public static String computeMerkleTreeRootHash(String[] hashes) {
+    return computeMerkleTreeRootHash(hashes, 0, hashes.length - 1);
+  }
+
+  /**
+   * @param hashes
+   * @param from
+   * @param end
+   * @return
+   */
+  private static String computeMerkleTreeRootHash(String[] hashes, int from, int end) {
+    // there is only one string, then return this string
+    if (end - from + 1 == 1) {
+      return hashes[end];
+    } else if (end - from + 1 == 2) {
+      // compute the hashID from the two
+      return messageDigestSHA256_toString(hashes[from] + hashes[end]);
+    } else {
+      // we need continue divide the array into two parts
+      int c = (from + end) / 2;
+      String mesg =
+          computeMerkleTreeRootHash(hashes, from, c)
+              + computeMerkleTreeRootHash(hashes, c + 1, end);
+      return messageDigestSHA256_toString(mesg);
+    }
+  }
+
   public static KeyPair generateKeyPair() {
     try {
       KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");

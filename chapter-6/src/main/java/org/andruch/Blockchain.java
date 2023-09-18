@@ -20,10 +20,64 @@ public class Blockchain implements Serializable {
     this.blockchain.add(genesisBlock);
   }
 
-  public synchronized void addBlock(Block block) {
+  public static boolean validateBlockchain(Blockchain ledger) {
+    int size = ledger.size();
+    for (int i = size - 1; i > 0; i--) {
+      Block currentBlock = ledger.getBlock(i);
+      boolean b = currentBlock.verifySignature(currentBlock.getCreator());
+      if (!b) {
+        System.out.println("validateBlockChain(): block " + (i + 1) + "  signature is invalid.");
+        return false;
+      }
+      b =
+          UtilityMethods.hashMeetsDifficultyLevel(
+                  currentBlock.getHashID(), currentBlock.getDifficultyLevel())
+              && currentBlock.computeHashID().equals(currentBlock.getHashID());
+      if (!b) {
+        System.out.println("validateBlockChain():  block  " + (i + 1) + "  its hashing is bad");
+        return false;
+      }
+      Block previousBlock = ledger.getBlock(i - 1);
+      b = currentBlock.getPreviousBlockHashID().equals(previousBlock.getHashID());
+      if (!b) {
+        System.out.println(
+            "validateBlockChain():  block  " + (i + 1) + "  invalid previous block hashID");
+        return false;
+      }
+    }
+    Block genesisBlock = ledger.getGenesisBlock();
+    // confirm the genesis is signed
+    boolean b2 = genesisBlock.verifySignature(genesisBlock.getCreator());
+    if (!b2) {
+      System.out.println("validateBlockChain():  genesis block is tampered, signature bad");
+      return false;
+    }
+
+    b2 =
+        UtilityMethods.hashMeetsDifficultyLevel(
+                genesisBlock.getHashID(), genesisBlock.getDifficultyLevel())
+            && genesisBlock.computeHashID().equals(genesisBlock.getHashID());
+    if (!b2) {
+      System.out.println("validateBlockChain(): gensis block is hashing is bad");
+      return false;
+    }
+    return true;
+  }
+
+  public PublicKey getGenesisMiner() {
+    return this.getGenesisBlock().getCreator();
+  }
+
+  public synchronized boolean addBlock(Block block) {
+    if (this.size() == 0) {
+      this.blockchain.add(block);
+      return true;
+    }
     if (block.getPreviousBlockHashID().equals(this.getLastBlock().getHashID())) {
       this.blockchain.add(block);
+      return true;
     }
+    return false;
   }
 
   public Block getGenesisBlock() {
@@ -42,12 +96,28 @@ public class Blockchain implements Serializable {
     return blockchain.findByIndex(index);
   }
 
+  protected boolean transactionExists(Transaction T) {
+    int size = this.blockchain.size();
+    for (int i = size - 1; i > 0; i--) {
+      Block b = this.blockchain.findByIndex(i);
+      int bs = b.getNumberOfTransactions();
+      for (int j = 0; j < bs; j++) {
+        Transaction t2 = b.getTransaction(j);
+        if (T.equals(t2)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public double findRelatedUTXOs(
       PublicKey key,
       List<UTXO> all,
       List<UTXO> spent,
       List<UTXO> unspent,
-      List<Transaction> sentTransactions) {
+      List<Transaction> sentTransactions,
+      List<UTXO> rewards) {
     double gain = 0.0, spending = 0.0;
     Map<String, UTXO> map = new HashMap<>();
     int limit = size();
@@ -76,6 +146,20 @@ public class Blockchain implements Serializable {
           }
         }
       }
+      // add reward transactions. The reward might be null since a miner might underpay himself
+      if (block.getCreator().equals(key)) {
+        Transaction rt = block.getRewardTransaction();
+        if (rt != null && rt.getNumberOfOutputUTXOs() > 0) {
+          UTXO ux = rt.getOutputUTXO(0);
+          // double check again, so a miner can only reward himself
+          // if he rewards others, this reward is not counted
+          if (ux.getReceiver().equals(key)) {
+            rewards.add(ux);
+            all.add(ux);
+            gain += ux.getFundsTransferred();
+          }
+        }
+      }
     }
     for (int i = 0; i < all.size(); i++) {
       UTXO u = all.get(i);
@@ -84,6 +168,16 @@ public class Blockchain implements Serializable {
       }
     }
     return gain - spending;
+  }
+
+  public double findRelatedUTXOs(
+      PublicKey key,
+      List<UTXO> all,
+      List<UTXO> spent,
+      List<UTXO> unspent,
+      List<Transaction> sentTransactions) {
+    List<UTXO> rewards = new ArrayList<>();
+    return findRelatedUTXOs(key, all, spent, unspent, sentTransactions, rewards);
   }
 
   public double findRelatedUTXOs(
@@ -111,5 +205,19 @@ public class Blockchain implements Serializable {
     List<UTXO> all = new ArrayList<>();
     List<UTXO> spent = new ArrayList<>();
     return findRelatedUTXOs(key, all, spent, unspent);
+  }
+
+  // Private constructor for copying purposes
+  private Blockchain(LedgerList<Block> chain) {
+    this.blockchain = new LedgerList<>();
+    int size = chain.size();
+    for (int i = 0; i < size; i++) {
+      this.blockchain.add(chain.findByIndex(i));
+    }
+  }
+
+  // Shallow copy. The blocks and their order are preserved.
+  public synchronized Blockchain copy_NotDeepCopy() {
+    return new Blockchain(this.blockchain);
   }
 }
